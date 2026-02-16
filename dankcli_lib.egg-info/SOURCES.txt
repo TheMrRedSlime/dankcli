@@ -1,0 +1,16 @@
+LICENSE
+MANIFEST.in
+README.md
+setup.py
+dankcli/__init__.py
+dankcli/__main__.py
+dankcli/caption.py
+dankcli/functions.py
+dankcli/fonts/HelveticaNeue.ttf
+dankcli/fonts/arial.ttf
+dankcli_lib.egg-info/PKG-INFO
+dankcli_lib.egg-info/SOURCES.txt
+dankcli_lib.egg-info/dependency_links.txt
+dankcli_lib.egg-info/not-zip-safe
+dankcli_lib.egg-info/requires.txt
+dankcli_lib.egg-info/top_level.txt

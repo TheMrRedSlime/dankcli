@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dankcli"
+version = "0.1.0"
+dependencies = [
+    "Pillow>=10.0.0",
+]
+description = "A CLI tool for generating memes"
+readme = "README.md"
+requires-python = ">=3.7"
+
+[project.scripts]
+dankcli = "dankcli.__main__:main"
