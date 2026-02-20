@@ -1,0 +1,2 @@
+[console_scripts]
+dankcli = dankcli_lib.__main__:main

@@ -1,30 +1,28 @@
 Metadata-Version: 2.4
 Name: dankcli_lib
-Version: 0.5.9
-Summary: Patched CLI Meme Generator to automatically add whitespace and text to top and bottom
-Home-page: https://github.com/TheMrRedSlime/dankcli
+Version: 0.6.3
+Summary: Patched CLI Meme Generator/Caption Maker to automatically add whitespace and text to top and bottom
 Author: TheMrRedSlime
 License: MIT
-Keywords: dankcli dank meme memegenerator memes generator pillow dankmemes dankcli-lib caption maker make
+Project-URL: Homepage, https://github.com/TheMrRedSlime/dankcli
+Keywords: dankcli,dank,meme,memegenerator,memes,generator,pillow,dankmemes,dankcli-lib,caption,maker,make
+Requires-Python: >=3.7
 Description-Content-Type: text/markdown
 License-File: LICENSE
 Requires-Dist: pillow
-Dynamic: author
-Dynamic: description
-Dynamic: description-content-type
-Dynamic: home-page
-Dynamic: keywords
-Dynamic: license
 Dynamic: license-file
-Dynamic: requires-dist
-Dynamic: summary
+
+# dankcli-lib
+[![PyPI version](https://img.shields.io/pypi/v/dankcli-lib.svg?label=PyPI)](https://pypi.org/project/dankcli-lib/)
+[![Python Version](https://img.shields.io/badge/Python-3.7%2B-blue.svg)](https://www.python.org/downloads/)
+[![Downloads](https://pepy.tech/badge/dankcli-lib)](https://pepy.tech/project/dankcli-lib)
 
 dankcli-lib is a CLI Image Captioning Tool, Meme Generator and Library which automatically adds white space and text to the top of your image.
 
 ## Installation
 
 ```bash
-$ pip install dankcli
+$ pip install dankcli-lib
 ```
 
 ## Usage

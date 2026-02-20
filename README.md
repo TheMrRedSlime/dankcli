@@ -1,14 +1,14 @@
-# dankcli
-[![PyPI version](https://img.shields.io/pypi/v/dankcli.svg?label=PyPI)](https://pypi.org/project/dankcli/)
-[![Python Version](https://img.shields.io/badge/Python-3.6%2B-blue.svg)](https://www.python.org/downloads/)
-[![Downloads](https://pepy.tech/badge/dankcli)](https://pepy.tech/project/dankcli)
+# dankcli-lib
+[![PyPI version](https://img.shields.io/pypi/v/dankcli-lib.svg?label=PyPI)](https://pypi.org/project/dankcli-lib/)
+[![Python Version](https://img.shields.io/badge/Python-3.7%2B-blue.svg)](https://www.python.org/downloads/)
+[![Downloads](https://pepy.tech/badge/dankcli-lib)](https://pepy.tech/project/dankcli-lib)
 
 dankcli-lib is a CLI Image Captioning Tool, Meme Generator and Library which automatically adds white space and text to the top of your image.
 
 ## Installation
 
 ```bash
-$ pip install dankcli
+$ pip install dankcli-lib
 ```
 
 ## Usage
