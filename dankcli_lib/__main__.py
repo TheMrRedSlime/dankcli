@@ -87,7 +87,7 @@ def main():
             args.text, 
             font_path=args.font, 
             separator_line=args.separator_line,
-            seperator_line_color=separator_color,
+            separator_line_color=separator_color,
             bottom_text=args.bottom_text,
             bottom_text_box=args.bottom_text_box,
             top_font_color=top_font_color,

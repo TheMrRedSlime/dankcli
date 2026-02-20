@@ -3,7 +3,7 @@
 [![Python Version](https://img.shields.io/badge/Python-3.6%2B-blue.svg)](https://www.python.org/downloads/)
 [![Downloads](https://pepy.tech/badge/dankcli)](https://pepy.tech/project/dankcli)
 
-dankcli is a CLI Image Captioning Tool or Meme Generator which automatically adds white space and text to the top of your image.
+dankcli-lib is a CLI Image Captioning Tool, Meme Generator and Library which automatically adds white space and text to the top of your image.
 
 ## Installation
 
@@ -14,7 +14,7 @@ $ pip install dankcli
 ## Usage
 
 ```bash
-$ python -m dankcli "path/to/image" "Meme text you want to add" [-f "final_image_name_without_extension"]
+$ python -m dankcli_lib "path/to/image" "Meme text you want to add" [-f "final_image_name_without_extension"]
 ```
 
 #### Python:
@@ -22,8 +22,8 @@ $ python -m dankcli "path/to/image" "Meme text you want to add" [-f "final_image
 ```python
 from dankcli_lib.caption import Caption
 
-caption = Caption("/path/to/image", "Text here", bottom_text="Bottom text here", bottom_font_color="#000000", bottom_text_box=False)
-caption.save('sans.jpg')
+caption = Caption("/path/to/image", "Text here", bottom_text="Bottom text here", bottom_font_color="#000000", bottom_text_box=False, font_path="arial.ttf", separator_line=True, separator_line_color="#000000", top_font_color="#ffffff", top_background_color="#000000", bottom_background_color="#000000")
+caption.save('file.jpg')
 ```
 
 ```python
@@ -52,7 +52,7 @@ The image is saved in the current folder with the name as the current date and t
 
 #### Example 1 (showing \n functionality)
 ```bash
-$ python -m dankcli "templates/yesbutno.jpg" "Mom at 2am: Are you awake?\n\nMe:"
+$ python -m dankcli_lib "templates/yesbutno.jpg" "Mom at 2am: Are you awake?\n\nMe:"
 ```
 turns this
 
@@ -64,7 +64,7 @@ to this
 
 #### Example 2 (showing auto textwrap)
 ```bash
-$ python -m dankcli "mymemes/helpmeme.jpg" "When you make a meme generator but now you can't stop making memes"
+$ python -m dankcli_lib "mymemes/helpmeme.jpg" "When you make a meme generator but now you can't stop making memes"
 ```
 turns this
 

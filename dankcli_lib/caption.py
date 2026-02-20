@@ -10,10 +10,10 @@ class Caption:
     WIDTH_PADDING = 10
     MINIMUM_FONT_SIZE = 13
     HW_ASPECT_RATIO_THRESHOLD = 1.666
-    MAX_BOTTOM_TEXT_HEIGHT_RATIO = 0.334  # Bottom text max 33.4% of image height
+    MAX_BOTTOM_TEXT_HEIGHT_RATIO = 0.334
     
     def __init__(self, image_path, text, font_path="arial.ttf", separator_line=False, separator_line_color=None, 
-                 bottom_text=None, bottom_text_box=True,  # <-- Added bottom_text_box parameter
+                 bottom_text=None, bottom_text_box=True,
                  top_font_color=None, bottom_font_color=None, top_background_color=None, bottom_background_color=None):
         """
         Initialize Caption with an image and text.
@@ -31,7 +31,7 @@ class Caption:
         self.image = Image.open(image_path)
         self.text = text.replace("\\n", "\n")
         self.bottom_text = bottom_text.replace("\\n", "\n") if bottom_text else None
-        self.bottom_text_box = bottom_text_box  # <-- Store the new parameter
+        self.bottom_text_box = bottom_text_box 
         self.font_path = font_path
         self.separator_line = separator_line
         self.separator_line_color = separator_line_color if separator_line_color is not None else (0, 0, 0)
@@ -89,7 +89,6 @@ class Caption:
     
     def _process_text(self):
         """Process and wrap text for rendering."""
-        # Wrap each intentional newline section individually
         wrapped_lines = "\n".join([
             self._wrap_text(line, self.width) 
             for line in self.text.split("\n")
@@ -103,38 +102,31 @@ class Caption:
             return 0
         
         _, line_height = self._get_text_dimensions(line_list[0])
-        # Add spacing between lines (roughly 20% of line height)
         total_text_height = len(line_list) * (line_height * 1.2)
         return int(total_text_height + self.TOP_PADDING + self.BOTTOM_PADDING)
     
     def _get_text_position(self, text):
         """Calculate top-left corner position for centered text."""
         line_list = text.split('\n')
-        # Find width of the widest line for centering
         max_w = max(self._get_text_dimensions(line)[0] for line in line_list)
         return ((self.width - max_w) / 2, self.TOP_PADDING)
     
     def _get_text_position_bottom(self, text, y_offset):
         """Calculate top-left corner position for centered bottom text."""
         line_list = text.split('\n')
-        # Find width of the widest line for centering
         max_w = max(self._get_text_dimensions(line)[0] for line in line_list)
         return ((self.width - max_w) / 2, y_offset + self.TOP_PADDING)
     
     def _get_text_position_bottom_overlay(self, text):
         """Calculate position for bottom text overlay on the image."""
         line_list = text.split('\n')
-        # Find width of the widest line for centering
         max_w = max(self._get_text_dimensions(line)[0] for line in line_list)
         
-        # Calculate total text height
         _, line_height = self._get_text_dimensions(line_list[0])
         total_text_height = len(line_list) * (line_height * 1.2)
         
-        # Position at bottom of image with padding
         y_position = self.height - total_text_height - self.BOTTOM_PADDING
         
-        # Ensure it doesn't go above the image (safety check)
         if y_position < self.TOP_PADDING:
             y_position = self.TOP_PADDING
             
@@ -147,11 +139,9 @@ class Caption:
         Returns:
             PIL.Image: The captioned image
         """
-        # Process top text
         wrapped_top_text = self._process_text()
         top_text_height = self._calculate_text_height(wrapped_top_text)
         
-        # Process bottom text if provided
         bottom_text_height = 0
         wrapped_bottom_text = None
         if self.bottom_text:
@@ -161,39 +151,33 @@ class Caption:
             ])
             bottom_text_height = self._calculate_text_height(wrapped_bottom_text)
             
-            # Apply safety limit for bottom text box (max 30% of image height)
             if self.bottom_text_box:
                 max_allowed_height = int(self.height * self.MAX_BOTTOM_TEXT_HEIGHT_RATIO)
                 if bottom_text_height > max_allowed_height:
-                    # Reduce font size or truncate? For now, we'll keep as is but you could add handling
                     pass
         
-        # Calculate total canvas height based on whether bottom text has a box or not
         if self.bottom_text_box or not self.bottom_text:
             total_height = top_text_height + self.height + bottom_text_height
             canvas = Image.new("RGB", (self.width, total_height), (255, 255, 255))
-            # Paste the original image in the middle
             canvas.paste(self.image, (0, top_text_height))
         else:
-            # No bottom box - canvas only needs top text + image
             total_height = top_text_height + self.height
             canvas = Image.new("RGB", (self.width, total_height), (255, 255, 255))
-            # Paste the original image below top text
             canvas.paste(self.image, (0, top_text_height))
         
-        # Draw separator line at top if enabled
+        draw = ImageDraw.Draw(canvas)
+        
+        if self.top_background_color:
+            draw.rectangle(
+                [(0, 0), (self.width, top_text_height)],
+                fill=self.top_background_color
+            )
+        
         if self.separator_line:
-            draw = ImageDraw.Draw(canvas)
-            # Draw a line at the bottom of the top white box
             line_y = top_text_height - 1
             draw.line([(0, line_y), (self.width, line_y)], fill=self.separator_line_color, width=2)
         
-        # Draw top text
-        draw = ImageDraw.Draw(canvas)
         top_text_pos = self._get_text_position(wrapped_top_text)
-        
-        # Draw top background if needed (optional - you could add this feature)
-        # For now, just draw text
         
         draw.multiline_text(
             top_text_pos,
@@ -204,16 +188,17 @@ class Caption:
             spacing=4
         )
         
-        # Draw bottom text if provided
         if self.bottom_text and wrapped_bottom_text:
             if self.bottom_text_box:
-                # Draw bottom text in its own box below the image
-                bottom_text_pos = self._get_text_position_bottom(wrapped_bottom_text, top_text_height + self.height)
-                
-                # Draw bottom background (white box)
+                # Draw bottom background if specified
                 if self.bottom_background_color:
-                    # You could draw a rectangle here if needed
-                    pass
+                    bottom_bg_y = top_text_height + self.height
+                    draw.rectangle(
+                        [(0, bottom_bg_y), (self.width, bottom_bg_y + bottom_text_height)],
+                        fill=self.bottom_background_color
+                    )
+                
+                bottom_text_pos = self._get_text_position_bottom(wrapped_bottom_text, top_text_height + self.height)
                 
                 draw.multiline_text(
                     bottom_text_pos,
@@ -224,17 +209,11 @@ class Caption:
                     spacing=4
                 )
                 
-                # Draw separator line at bottom if enabled
                 if self.separator_line:
                     line_y = top_text_height + self.height
                     draw.line([(0, line_y), (self.width, line_y)], fill=self.separator_line_color, width=2)
             else:
-                # Draw bottom text directly on the image (overlay)
-                # We need to draw on the image portion, not the whole canvas
-                # Create a separate draw context for the image area
                 overlay_text_pos = self._get_text_position_bottom_overlay(wrapped_bottom_text)
-                
-                # Adjust y position to account for top text offset
                 adjusted_y = overlay_text_pos[1] + top_text_height
                 
                 draw.multiline_text(
@@ -247,11 +226,11 @@ class Caption:
                 )
         
         return canvas
-    
-    def to_buffer(self):
+
+    def to_buffer(self, format="JPEG"):
         captioned_image = self.generate()
         buffer = io.BytesIO()
-        captioned_image.save(buffer)
+        captioned_image.save(buffer, format=format)
         buffer.seek(0)
         return buffer
 
