@@ -1,11 +1,11 @@
 Metadata-Version: 2.4
-Name: dankcli-lib
-Version: 0.5.8
-Summary: Patched CLI Meme Generator to automatically add whitespace and text to top
+Name: dankcli_lib
+Version: 0.5.9
+Summary: Patched CLI Meme Generator to automatically add whitespace and text to top and bottom
 Home-page: https://github.com/
 Author: TheMrRedSlime
 License: MIT
-Keywords: dankcli dank meme memegenerator memes generator pillow dankmemes damkcli-lib caption maker make
+Keywords: dankcli dank meme memegenerator memes generator pillow dankmemes dankcli-lib caption maker make
 Description-Content-Type: text/markdown
 License-File: LICENSE
 Requires-Dist: pillow

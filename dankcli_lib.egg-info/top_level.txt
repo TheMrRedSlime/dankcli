@@ -1,1 +1,1 @@
-dankcli
+dankcli_lib

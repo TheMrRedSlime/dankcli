@@ -17,6 +17,34 @@ $ pip install dankcli
 $ python -m dankcli "path/to/image" "Meme text you want to add" [-f "final_image_name_without_extension"]
 ```
 
+#### Python:
+
+```python
+from dankcli_lib.caption import Caption
+
+caption = Caption("/path/to/image", "Text here", bottom_text="Bottom text here", bottom_font_color="#000000", bottom_text_box=False)
+caption.save('sans.jpg')
+```
+
+```python
+from dankcli_lib.caption import Caption
+
+with Caption("image.jpg", "Your text") as caption:
+    buffer = caption.to_buffer()
+    await ctx.send(file=discord.File(buffer, "image.jpg"))
+```
+
+```python
+from dankcli_lib.caption import Caption
+import discord
+
+caption = Caption("image.jpg", "Your text")
+buffer = caption.to_buffer()
+await ctx.send(file=discord.File(buffer, "image.jpg"))
+caption.close()
+```
+
+
 The text gets automatically wrapped according to width of image but you can also have intentional \n in your text.
 The image is saved in the current folder with the name as the current date and time, the name can be changed with the optional `-f` or `--filename` argument, specifying a file name without the file extension. 
 
