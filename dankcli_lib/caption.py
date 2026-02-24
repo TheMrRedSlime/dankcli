@@ -296,29 +296,26 @@ class Caption:
         return canvas
 
     def to_buffer(self, format="JPEG"):
-        """Generate captioned image and return as bytes buffer."""
-        if format.upper() == "GIF" and self._is_animated_gif():
-            return self.generate_gif()
+        """Generate captioned image and return (buffer, extension)."""
+        if self._is_animated_gif():
+            return self.generate_gif(), "gif"
         else:
             captioned_image = self.generate()
             buffer = io.BytesIO()
+            # Use lowercase extension
+            ext = format.lower()
             captioned_image.save(buffer, format=format)
             buffer.seek(0)
-            return buffer
-
+            return buffer, ext
+            
     def close(self):
         """Close the underlying PIL Image to free memory."""
         if hasattr(self, 'image'):
             self.image.close()
 
     def save(self, output_path):
-        """
-        Generate and save the captioned image.
-        
-        Args:
-            output_path: Path to save the output image
-        """
-        if output_path.lower().endswith('.gif') and self._is_animated_gif():
+        """Generate and save the captioned image."""
+        if self._is_animated_gif():
             gif_buffer = self.generate_gif()
             with open(output_path, 'wb') as f:
                 f.write(gif_buffer.getvalue())

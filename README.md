@@ -30,8 +30,8 @@ caption.save('file.jpg')
 from dankcli_lib.caption import Caption
 
 with Caption("image.jpg", "Your text") as caption:
-    buffer = caption.to_buffer()
-    await ctx.send(file=discord.File(buffer, "image.jpg"))
+    buffer, ext = caption.to_buffer()
+    await ctx.send(file=discord.File(buffer, f"image.{ext}"))
 ```
 
 ```python
@@ -39,8 +39,8 @@ from dankcli_lib.caption import Caption
 import discord
 
 caption = Caption("https://example.com/image.jpg", "Your text")
-buffer = caption.to_buffer()
-await ctx.send(file=discord.File(buffer, "image.jpg"))
+buffer, ext = caption.to_buffer()
+await ctx.send(file=discord.File(buffer, f"image.{ext}"))
 caption.close()
 ```
 
