@@ -1,4 +1,4 @@
-from PIL import Image, ImageFont, ImageDraw
+from PIL import Image, ImageFont, ImageDraw, ImageSequence
 import math, io, requests
 from urllib.parse import urlparse
 
@@ -68,6 +68,57 @@ class Caption:
             self.font = ImageFont.truetype(font_path, size=font_size)
         except OSError:
             self.font = ImageFont.load_default()
+
+    def _is_animated_gif(self):
+        """Check if the image is an animated GIF."""
+        return (hasattr(self.image, 'is_animated') and 
+                self.image.is_animated and 
+                getattr(self.image, 'format', '') == 'GIF')
+
+    def generate_gif(self):
+        """Generate captioned GIF preserving animation."""
+        frames = []
+        durations = []
+        
+        # Process each frame
+        for frame in ImageSequence.Iterator(self.image):
+            # Convert frame to RGB and copy
+            frame_rgb = frame.convert('RGB')
+            
+            # Temporarily replace self.image with current frame
+            original_image = self.image
+            original_size = (self.width, self.height)
+            
+            self.image = frame_rgb
+            self.width, self.height = self.image.size
+            
+            # Generate captioned frame
+            captioned_frame = self.generate()
+            frames.append(captioned_frame)
+            
+            # Get frame duration
+            try:
+                durations.append(frame.info.get('duration', 100))
+            except:
+                durations.append(100)
+        
+        # Restore original image
+        self.image = original_image
+        self.width, self.height = original_size
+        
+        # Save as animated GIF
+        output = io.BytesIO()
+        frames[0].save(
+            output,
+            format='GIF',
+            save_all=True,
+            append_images=frames[1:],
+            duration=durations,
+            loop=0,
+            disposal=2
+        )
+        output.seek(0)
+        return output
     
     def _calculate_font_size(self):
         """Calculate appropriate font size based on image dimensions."""
@@ -245,11 +296,15 @@ class Caption:
         return canvas
 
     def to_buffer(self, format="JPEG"):
-        captioned_image = self.generate()
-        buffer = io.BytesIO()
-        captioned_image.save(buffer, format=format)
-        buffer.seek(0)
-        return buffer
+        """Generate captioned image and return as bytes buffer."""
+        if format.upper() == "GIF" and self._is_animated_gif():
+            return self.generate_gif()
+        else:
+            captioned_image = self.generate()
+            buffer = io.BytesIO()
+            captioned_image.save(buffer, format=format)
+            buffer.seek(0)
+            return buffer
 
     def close(self):
         """Close the underlying PIL Image to free memory."""
@@ -263,6 +318,11 @@ class Caption:
         Args:
             output_path: Path to save the output image
         """
-        captioned_image = self.generate()
-        captioned_image.save(output_path)
+        if output_path.lower().endswith('.gif') and self._is_animated_gif():
+            gif_buffer = self.generate_gif()
+            with open(output_path, 'wb') as f:
+                f.write(gif_buffer.getvalue())
+        else:
+            captioned_image = self.generate()
+            captioned_image.save(output_path)
         return output_path

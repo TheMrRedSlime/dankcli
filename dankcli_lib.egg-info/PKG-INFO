@@ -1,3 +1,18 @@
+Metadata-Version: 2.4
+Name: dankcli_lib
+Version: 0.6.6
+Summary: Patched CLI Meme Generator/Caption Maker to automatically add whitespace and text to top and bottom
+Author: TheMrRedSlime
+License: MIT
+Project-URL: Homepage, https://github.com/TheMrRedSlime/dankcli
+Keywords: dankcli,dank,meme,memegenerator,memes,generator,pillow,dankmemes,dankcli-lib,caption,maker,make,discord,discord.py
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pillow
+Requires-Dist: requests
+Dynamic: license-file
+
 # dankcli-lib
 [![PyPI version](https://img.shields.io/pypi/v/dankcli-lib.svg?label=PyPI)](https://pypi.org/project/dankcli-lib/)
 [![Python Version](https://img.shields.io/badge/Python-3.7%2B-blue.svg)](https://www.python.org/downloads/)
