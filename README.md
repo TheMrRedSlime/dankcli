@@ -83,3 +83,7 @@ Added URL/Link support
 ### 0.6.5
 
 Added the discord and discord.py tags
+
+### 0.6.6
+
+Patched URL/Link support caused parsed was undefinied
