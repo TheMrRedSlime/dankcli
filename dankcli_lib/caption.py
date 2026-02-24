@@ -30,6 +30,7 @@ class Caption:
             bottom_font_color: Font color for bottom text (defaults to white (255,255,255) if None)
         """
         #self.image = Image.open(image_path)
+        parsed = urlparse(image_path)
         if parsed.scheme in ('http', 'https'):
             response = requests.get(image_path, stream=True)
             response.raise_for_status()
