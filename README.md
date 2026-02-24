@@ -79,3 +79,7 @@ to this
 ### 0.6.4
 
 Added URL/Link support
+
+### 0.6.5
+
+Added the discord and discord.py tags
