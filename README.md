@@ -91,3 +91,7 @@ Patched URL/Link support caused parsed was undefinied
 ### 0.6.7
 
 Added GIF SUPPORT!
+
+### 0.6.8
+
+Increased the Font Size

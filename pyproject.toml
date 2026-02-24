@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dankcli_lib"
-version = "0.6.7"
+version = "0.6.8"
 description = "Patched CLI Meme Generator/Caption Maker to automatically add whitespace and text to top and bottom"
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {text = "MIT"}
