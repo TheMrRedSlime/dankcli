@@ -1,5 +1,6 @@
 from PIL import Image, ImageFont, ImageDraw
-import math, io
+import math, io, requests
+from urllib.parse import urlparse
 
 class Caption:
     """Handles image captioning with text overlay."""
@@ -28,7 +29,14 @@ class Caption:
             top_font_color: Font color for top text (defaults to black (0,0,0) if None)
             bottom_font_color: Font color for bottom text (defaults to white (255,255,255) if None)
         """
-        self.image = Image.open(image_path)
+        #self.image = Image.open(image_path)
+        if parsed.scheme in ('http', 'https'):
+            response = requests.get(image_path, stream=True)
+            response.raise_for_status()
+            self.image = Image.open(io.BytesIO(response.content))
+        else:
+            self.image = Image.open(image_path)
+            
         self.text = text.replace("\\n", "\n")
         self.bottom_text = bottom_text.replace("\\n", "\n") if bottom_text else None
         self.bottom_text_box = bottom_text_box 

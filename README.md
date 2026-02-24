@@ -38,7 +38,7 @@ with Caption("image.jpg", "Your text") as caption:
 from dankcli_lib.caption import Caption
 import discord
 
-caption = Caption("image.jpg", "Your text")
+caption = Caption("https://example.com/image.jpg", "Your text")
 buffer = caption.to_buffer()
 await ctx.send(file=discord.File(buffer, "image.jpg"))
 caption.close()
@@ -74,3 +74,8 @@ to this
 
 ![](https://i.imgur.com/lSBUfNb.png)
 
+## Updates
+
+### 0.6.4
+
+Added URL/Link support

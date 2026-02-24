@@ -102,6 +102,7 @@ def main():
         # PNG supports transparency better, but we'll let the user specify format eventually
         is_jpeg = img_path.lower().endswith(('.jpg', '.jpeg'))
         extension = "jpg" if is_jpeg else "png"
+        extension = "gif" if img_path.lower().endswith(".gif") else "png"
         output_path = f"{out_name}.{extension}"
         
         # Generate and save
