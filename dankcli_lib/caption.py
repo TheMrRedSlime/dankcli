@@ -12,6 +12,14 @@ class Caption:
     MINIMUM_FONT_SIZE = 13
     HW_ASPECT_RATIO_THRESHOLD = 1.666
     MAX_BOTTOM_TEXT_HEIGHT_RATIO = 0.334
+
+    def __enter__(self):
+        """Enter the runtime context for the with statement."""
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Exit the runtime context and clean up resources."""
+        self.close()
     
     def __init__(self, image_path, text, font_path="arial.ttf", separator_line=False, separator_line_color=None, 
                  bottom_text=None, bottom_text_box=True,
