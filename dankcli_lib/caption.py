@@ -21,9 +21,9 @@ class Caption:
         """Exit the runtime context and clean up resources."""
         self.close()
     
-    def __init__(self, image_path, text, font_path="arial.ttf", separator_line=False, separator_line_color=None, 
+    def __init__(self, image_path, text, separator_line=False, separator_line_color=None, 
                  bottom_text=None, bottom_text_box=True,
-                 top_font_color=None, bottom_font_color=None, top_background_color=None, bottom_background_color=None):
+                 top_font_color=None, bottom_font_color=None, top_background_color=None, bottom_background_color=None, italic=False, bold=False):
         """
         Initialize Caption with an image and text.
         
@@ -36,6 +36,8 @@ class Caption:
             bottom_text_box: If True, adds white box for bottom text. If False, overlays text on image
             top_font_color: Font color for top text (defaults to black (0,0,0) if None)
             bottom_font_color: Font color for bottom text (defaults to white (255,255,255) if None)
+            italic: Whether Text should be Italic
+            bold: Whether Text should be Bold
         """
         #self.image = Image.open(image_path)
         parsed = urlparse(image_path)
@@ -48,9 +50,10 @@ class Caption:
             
         self.text = text.replace("\\n", "\n")
         self.bottom_text = bottom_text.replace("\\n", "\n") if bottom_text else None
-        self.bottom_text_box = bottom_text_box 
-        self.font_path = font_path
+        self.bottom_text_box = bottom_text_box
         self.separator_line = separator_line
+        self.italic = italic
+        self.bold = bold
         self.separator_line_color = separator_line_color if separator_line_color is not None else (0, 0, 0)
 
         self.width, self.height = self.image.size
@@ -63,11 +66,7 @@ class Caption:
         self.bottom_background_color = bottom_background_color if bottom_background_color is not None else (255, 255, 255)
         
         # Initialize font
-        try:
-            font_size = self._calculate_font_size()
-            self.font = ImageFont.truetype(font_path, size=font_size)
-        except OSError:
-            self.font = ImageFont.load_default()
+        self.font = ImageFont.load_default()
 
     def _is_animated_gif(self):
         """Check if the image is an animated GIF."""
@@ -245,6 +244,94 @@ class Caption:
         output.seek(0)
         return output
     
+    def _draw_text_with_style(self, draw, position, text, fill, align="center", spacing=4):
+        """Draw text with bold/italic simulation"""
+        x, y = position
+        
+        if self.bold and self.italic:
+            # Bold Italic: draw multiple times with offset + shear
+            self._draw_bold_italic_text(draw, position, text, fill, align, spacing+4)
+        elif self.bold:
+            # Bold: draw text multiple times with slight offset
+            offsets = [(0,0), (1,0), (0,1), (1,1)]
+            for dx, dy in offsets:
+                draw.multiline_text(
+                    (x + dx, y + dy),
+                    text,
+                    fill=fill,
+                    font=self.font,
+                    align=align,
+                    spacing=spacing+4
+                )
+        elif self.italic:
+            # Italic: draw with shear effect
+            self._draw_italic_text(draw, position, text, fill, align, spacing)
+        else:
+            # Normal
+            draw.multiline_text(
+                position,
+                text,
+                fill=fill,
+                font=self.font,
+                align=align,
+                spacing=spacing
+            )
+
+    def _draw_italic_text(self, draw, position, text, fill, align="center", spacing=4):
+        """Simulate italic text by shearing"""
+        from PIL import Image
+        
+        # Get text size
+        bbox = draw.textbbox((0, 0), text, font=self.font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+        
+        # Create temp image for text
+        temp_img = Image.new('RGBA', (text_width + 20, text_height + 20), (0, 0, 0, 0))
+        temp_draw = ImageDraw.Draw(temp_img)
+        temp_draw.text((10, 10), text, fill=fill, font=self.font, align=align, spacing=spacing)
+        
+        # Apply shear transformation (0.2 = ~11 degrees slant)
+        temp_img = temp_img.transform(
+            temp_img.size,
+            Image.Transform.AFFINE,
+            (1, 0.2, 0, 0, 1, 0),
+            Image.Resampling.BILINEAR
+        )
+        
+        # Paste onto main canvas
+        draw._image.paste(temp_img, (int(position[0] - 10), int(position[1] - 10)), temp_img)
+
+    def _draw_bold_italic_text(self, draw, position, text, fill, align="center", spacing=4):
+        """Simulate bold italic text"""
+        from PIL import Image
+        
+        # Get text size
+        bbox = draw.textbbox((0, 0), text, font=self.font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+        
+        # Create temp image
+        temp_img = Image.new('RGBA', (text_width + 30, text_height + 30), (0, 0, 0, 0))
+        temp_draw = ImageDraw.Draw(temp_img)
+        
+        # Draw multiple times for bold
+        offsets = [(0,0), (1,0), (0,1), (1,1)]
+        x, y = 15, 15
+        for dx, dy in offsets:
+            temp_draw.text((x + dx, y + dy), text, fill=fill, font=self.font, align=align, spacing=spacing)
+        
+        # Apply shear for italic
+        temp_img = temp_img.transform(
+            temp_img.size,
+            Image.Transform.AFFINE,
+            (1, 0.2, 0, 0, 1, 0),
+            Image.Resampling.BILINEAR
+        )
+        
+        # Paste
+        draw._image.paste(temp_img, (int(position[0] - 15), int(position[1] - 15)), temp_img)
+
     def _calculate_font_size(self):
         """Calculate appropriate font size based on image dimensions."""
         temp_size = max(math.floor(self.height / 13), self.MINIMUM_FONT_SIZE)
@@ -372,11 +459,20 @@ class Caption:
         
         top_text_pos = self._get_text_position(wrapped_top_text)
         
-        draw.multiline_text(
+#        draw.multiline_text(
+#            top_text_pos,
+#            wrapped_top_text,
+#            fill=self.top_font_color,
+#            font=self.font,
+#            align="center",
+#            spacing=4
+#        )
+
+        self._draw_text_with_style(
+            draw,
             top_text_pos,
             wrapped_top_text,
             fill=self.top_font_color,
-            font=self.font,
             align="center",
             spacing=4
         )
@@ -393,11 +489,20 @@ class Caption:
                 
                 bottom_text_pos = self._get_text_position_bottom(wrapped_bottom_text, top_text_height + self.height)
                 
-                draw.multiline_text(
+#                draw.multiline_text(
+#                    bottom_text_pos,
+#                    wrapped_bottom_text,
+#                    fill=self.bottom_font_color,
+#                    font=self.font,
+#                    align="center",
+#                    spacing=4
+#                )
+
+                self._draw_text_with_style(
+                    draw,
                     bottom_text_pos,
                     wrapped_bottom_text,
-                    fill=self.bottom_font_color,
-                    font=self.font,
+                    fill=self.top_font_color,
                     align="center",
                     spacing=4
                 )
@@ -409,11 +514,20 @@ class Caption:
                 overlay_text_pos = self._get_text_position_bottom_overlay(wrapped_bottom_text)
                 adjusted_y = overlay_text_pos[1] + top_text_height
                 
-                draw.multiline_text(
+#                draw.multiline_text(
+#                    (overlay_text_pos[0], adjusted_y),
+#                    wrapped_bottom_text,
+#                    fill=self.bottom_font_color,
+#                    font=self.font,
+#                    align="center",
+#                    spacing=4
+#                )
+
+                self._draw_text_with_style(
+                    draw,
                     (overlay_text_pos[0], adjusted_y),
                     wrapped_bottom_text,
                     fill=self.bottom_font_color,
-                    font=self.font,
                     align="center",
                     spacing=4
                 )

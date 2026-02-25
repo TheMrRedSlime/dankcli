@@ -22,7 +22,7 @@ $ python -m dankcli_lib "path/to/image" "Meme text you want to add" [-f "final_i
 ```python
 from dankcli_lib.caption import Caption
 
-caption = Caption("/path/to/image", "Text here", bottom_text="Bottom text here", bottom_font_color="#000000", bottom_text_box=False, font_path="arial.ttf", separator_line=True, separator_line_color="#000000", top_font_color="#ffffff", top_background_color="#000000", bottom_background_color="#000000")
+caption = Caption("/path/to/image", "Text here", bottom_text="Bottom text here", bottom_font_color="#000000", bottom_text_box=False, separator_line=True, separator_line_color="#000000", top_font_color="#ffffff", top_background_color="#000000", bottom_background_color="#000000", italic=False, bold=False)
 caption.save('file.jpg')
 ```
 
@@ -76,9 +76,6 @@ to this
 
 ## Updates
 
-### 0.6.4
-
-Added URL/Link support
 
 ### 0.6.5
 
@@ -99,3 +96,8 @@ Increased the Font Size
 ### 0.6.9
 
 Added Compression cause discord's a jerk
+
+### 0.7.0
+
+Added Italic, Bold, Had to Remove all TTF files though.
+Bold seems a bit broken rn
