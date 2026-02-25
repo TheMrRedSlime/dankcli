@@ -95,3 +95,7 @@ Added GIF SUPPORT!
 ### 0.6.8
 
 Increased the Font Size
+
+### 0.6.9
+
+Added Compression cause discord's a jerk

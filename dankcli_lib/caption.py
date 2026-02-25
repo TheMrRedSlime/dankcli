@@ -75,6 +75,131 @@ class Caption:
                 self.image.is_animated and 
                 getattr(self.image, 'format', '') == 'GIF')
 
+    def compress_to_size(self, buffer, target_size=8*1000*1000, original_format=None):
+        """Compress image to fit under target size (default 8MB)"""
+        # Check current size
+        buffer.seek(0, 2)
+        current_size = buffer.tell()
+        buffer.seek(0)
+        
+        
+        if current_size <= target_size:
+            return buffer
+        
+        # Open image from buffer
+        img = Image.open(buffer)
+        
+        # Determine format
+        if original_format:
+            format = original_format.upper()
+        else:
+            format = img.format if img.format else 'JPEG'
+        
+        
+        output = io.BytesIO()
+        
+        # Handle different formats
+        if format == 'GIF':
+            return self._compress_gif(img, target_size)
+        
+        elif format == 'PNG':
+            # Convert PNG to JPEG with white background
+            return self._convert_png_to_jpeg(img, target_size)
+        
+        else:  # JPEG and others
+            return self._compress_jpeg(img, target_size)
+
+    def _convert_png_to_jpeg(self, img, target_size):
+        """Convert PNG to JPEG with white background"""
+        
+        # Create white background
+        if img.mode == 'RGBA':
+            # Split alpha
+            rgb = Image.new('RGB', img.size, (255, 255, 255))
+            rgb.paste(img, mask=img.split()[3])  # Use alpha as mask
+            img_rgb = rgb
+        elif img.mode == 'P':
+            # Convert palette mode
+            img_rgb = img.convert('RGB')
+        else:
+            img_rgb = img.convert('RGB')
+        
+        # Now compress as JPEG
+        return self._compress_jpeg(img_rgb, target_size)
+
+    def _compress_jpeg(self, img, target_size):
+        output = io.BytesIO()
+        # Ensure RGB
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+
+        for quality in [85, 55, 30]: # Fewer steps = faster response
+            output.seek(0)
+            output.truncate()
+            img.save(output, format='JPEG', quality=quality, optimize=True)
+            if output.tell() < target_size:
+                output.seek(0)
+                return output
+
+        # If quality reduction failed, aggressive resize
+        scale = 0.7 
+        while output.tell() > target_size:
+            new_size = (int(img.width * scale), int(img.height * scale))
+            img = img.resize(new_size, Image.Resampling.LANCZOS)
+            output.seek(0)
+            output.truncate()
+            img.save(output, format='JPEG', quality=50, optimize=True)
+            scale -= 0.1
+        
+        output.seek(0)
+        return output
+
+    def _compress_gif(self, img, target_size):
+        """Compresses GIF by reducing colors and resolution until it fits target_size."""
+        
+        # Start with current resolution or cap at 800px
+        current_width = min(img.width, 800)
+        colors = 256 # Start with max colors
+        
+        while True:
+            scale = current_width / float(img.width)
+            new_size = (current_width, int(float(img.height) * scale))
+            
+            frames = []
+            durations = []
+            
+            for frame in ImageSequence.Iterator(img):
+                # 1. Resize
+                f = frame.resize(new_size, Image.Resampling.BILINEAR)
+                # 2. Reduce Quality (Quantize colors)
+                f = f.convert("P", palette=Image.Palette.ADAPTIVE, colors=colors)
+                frames.append(f)
+                durations.append(frame.info.get('duration', 100))
+            
+            output = io.BytesIO()
+            frames[0].save(
+                output, format='GIF', save_all=True, append_images=frames[1:],
+                duration=durations, loop=0, optimize=True, disposal=2
+            )
+            
+            output.seek(0, 2)
+            final_size = output.tell()
+            output.seek(0)
+            
+            
+            # Check if we are under the limit
+            if final_size <= target_size:
+                return output
+            
+            # If still too big, get more aggressive
+            if colors > 64:
+                colors //= 2  # Drop colors first to preserve sharpness
+            elif current_width > 200:
+                current_width -= 100 # Then drop resolution
+            else:
+                # If still too big at tiny res/colors, skip frames
+                return output
+
     def generate_gif(self):
         """Generate captioned GIF preserving animation."""
         frames = []
@@ -295,31 +420,113 @@ class Caption:
         
         return canvas
 
-    def to_buffer(self, format="JPEG"):
+    def to_buffer(self, format="JPEG", max_size=None):
         """Generate captioned image and return (buffer, extension)."""
         if self._is_animated_gif():
-            return self.generate_gif(), "gif"
+            buffer = self.generate_gif()
+            ext = "gif"
+            if max_size:
+                buffer = self.compress_to_size(buffer, max_size, original_format='GIF')
+            return buffer, ext
         else:
             captioned_image = self.generate()
             buffer = io.BytesIO()
-            # Use lowercase extension
-            ext = format.lower()
-            captioned_image.save(buffer, format=format)
-            buffer.seek(0)
-            return buffer, ext
             
+            # Determine actual format based on image and input
+            if format.upper() == 'PNG':
+                # Save as PNG first
+                captioned_image.save(buffer, format='PNG')
+                ext = 'png'
+            else:
+                # Default to JPEG
+                if captioned_image.mode in ('RGBA', 'LA', 'P'):
+                    # Convert to RGB for JPEG
+                    rgb_image = Image.new('RGB', captioned_image.size, (255, 255, 255))
+                    if captioned_image.mode == 'RGBA':
+                        rgb_image.paste(captioned_image, mask=captioned_image.split()[3])
+                    else:
+                        rgb_image.paste(captioned_image)
+                    rgb_image.save(buffer, format='JPEG', quality=95)
+                else:
+                    captioned_image.save(buffer, format='JPEG', quality=95)
+                ext = 'jpg'
+            
+            buffer.seek(0)
+            
+            # Compress if needed
+            if max_size:
+                # Pass the actual format for compression
+                original_format = 'PNG' if ext == 'png' else 'JPEG'
+                buffer = self.compress_to_size(buffer, max_size, original_format)
+            
+            return buffer, ext
+
+
     def close(self):
         """Close the underlying PIL Image to free memory."""
         if hasattr(self, 'image'):
             self.image.close()
-
-    def save(self, output_path):
+    
+    def save(self, output_path, max_size=None):
         """Generate and save the captioned image."""
         if self._is_animated_gif():
             gif_buffer = self.generate_gif()
+            
+            # Compress if needed
+            if max_size:
+                gif_buffer = self.compress_to_size(gif_buffer, max_size, original_format='GIF')
+            
+            # Write directly to file
             with open(output_path, 'wb') as f:
                 f.write(gif_buffer.getvalue())
         else:
             captioned_image = self.generate()
-            captioned_image.save(output_path)
+            
+            # Compress if needed
+            if max_size:
+                buffer = io.BytesIO()
+                
+                # Determine format from file extension
+                if output_path.lower().endswith('.png'):
+                    # Save as PNG first
+                    captioned_image.save(buffer, format='PNG')
+                    original_format = 'PNG'
+                else:
+                    # Save as JPEG (default)
+                    if captioned_image.mode in ('RGBA', 'LA', 'P'):
+                        # Convert to RGB for JPEG with white background
+                        rgb_image = Image.new('RGB', captioned_image.size, (255, 255, 255))
+                        if captioned_image.mode == 'RGBA':
+                            rgb_image.paste(captioned_image, mask=captioned_image.split()[3])
+                        else:
+                            rgb_image.paste(captioned_image)
+                        rgb_image.save(buffer, format='JPEG', quality=95)
+                    else:
+                        captioned_image.save(buffer, format='JPEG', quality=95)
+                    original_format = 'JPEG'
+                
+                buffer.seek(0)
+                
+                # Compress
+                compressed = self.compress_to_size(buffer, max_size, original_format)
+                
+                # Write compressed buffer directly to file
+                with open(output_path, 'wb') as f:
+                    f.write(compressed.getvalue())
+            else:
+                # No compression, save directly
+                if output_path.lower().endswith('.png'):
+                    captioned_image.save(output_path, format='PNG')
+                else:
+                    if captioned_image.mode in ('RGBA', 'LA', 'P'):
+                        # Convert to RGB for JPEG with white background
+                        rgb_image = Image.new('RGB', captioned_image.size, (255, 255, 255))
+                        if captioned_image.mode == 'RGBA':
+                            rgb_image.paste(captioned_image, mask=captioned_image.split()[3])
+                        else:
+                            rgb_image.paste(captioned_image)
+                        rgb_image.save(output_path, format='JPEG', quality=95)
+                    else:
+                        captioned_image.save(output_path, format='JPEG', quality=95)
+        
         return output_path
